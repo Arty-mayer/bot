@@ -9,8 +9,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -20,16 +20,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 public class MultiSessionTelegramBot extends TelegramLongPollingBot {
-    private String name;
-    private String token;
+    private final String name;
+    private final String token;
 
-    private ThreadLocal<Update> updateEvent = new ThreadLocal<>();
-    private HashMap<Long, Integer> gloryStorage = new HashMap<>();
+    private final ThreadLocal<Update> updateEvent = new ThreadLocal<>();
+    private final HashMap<Long, Integer> gloryStorage = new HashMap<>();
 
-    private List<Message> sendMessages = new ArrayList<>();
+    private final List<Message> sendMessages = new ArrayList<>();
 
     public MultiSessionTelegramBot(String name, String token) {
         this.name = name;
@@ -106,7 +105,7 @@ public class MultiSessionTelegramBot extends TelegramLongPollingBot {
         executeAsync(photo);
     }
 
-    public SendMessage createMessage( String text) {
+    public SendMessage createMessage(String text) {
         SendMessage message = new SendMessage();
         message.setText(new String(text.getBytes(), StandardCharsets.UTF_8));
         message.setParseMode("markdown");
@@ -115,26 +114,24 @@ public class MultiSessionTelegramBot extends TelegramLongPollingBot {
         return message;
     }
 
-    public SendMessage createMessage( String text, Map<String, String> buttons) {
+    public SendMessage createMessage(String text, Map<String, String> buttons) {
         SendMessage message = createMessage(text);
         if (buttons != null && !buttons.isEmpty())
             attachButtons(message, buttons);
         return message;
     }
 
-    private void attachButtons(SendMessage message, Map<String, String> buttons) {
+    private void attachButtons(@Nonnull SendMessage message, @Nonnull Map<String, String> buttons) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        for (String buttonName : buttons.keySet()) {
+        buttons.keySet().forEach(buttonName -> {
             String buttonValue = buttons.get(buttonName);
-
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(new String(buttonName.getBytes(), StandardCharsets.UTF_8));
             button.setCallbackData(buttonValue);
-
             keyboard.add(List.of(button));
-        }
+        });
 
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
@@ -180,10 +177,11 @@ public class MultiSessionTelegramBot extends TelegramLongPollingBot {
     }
 
     public void setUserGlory(int glories) {
-        gloryStorage.put( getCurrentChatId(), glories);
+        gloryStorage.put(getCurrentChatId(), glories);
     }
+
     public int getUserGlory() {
-        return gloryStorage.getOrDefault( getCurrentChatId(), 0);
+        return gloryStorage.getOrDefault(getCurrentChatId(), 0);
     }
 
     public void addUserGlory(int glories) {
